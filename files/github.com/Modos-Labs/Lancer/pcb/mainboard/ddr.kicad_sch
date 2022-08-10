@@ -1,0 +1,26 @@
+(kicad_sch (version 20210621) (generator eeschema)
+
+  (uuid 64c2991c-4a5b-48f4-9567-398ada42b56d)
+
+  (paper "A4")
+
+  (title_block
+    (title "Lancer Mainboard")
+    (date "2021-11-08")
+    (rev "R0.1")
+    (company "Copyright Modos 2021. / Engineer: Wenting Zhang")
+    (comment 2 "MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.")
+    (comment 3 "This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF")
+    (comment 4 "This source describes Open Hardware and is licensed under the CERN-OHL-S v2.")
+  )
+
+  (lib_symbols
+  )
+
+
+  (text "DDR is on core board. Reserve page for Stage 2 device"
+    (at 123.19 104.14 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid cd778db3-ede2-46d3-9e23-e7fecd4d400d)
+  )
+)

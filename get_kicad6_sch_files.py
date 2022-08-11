@@ -24,7 +24,7 @@ def get_file_list():
     return files
 
 
-def write_contents(files):
+def write_contents(files, existing):
     gql = """
         query ($q: String!) {
           search(query: $q, version: V3) {
@@ -47,9 +47,7 @@ def write_contents(files):
         path = f["path"]
         payload = {
             "query": gql,
-            "variables": {
-                "q": f'repo:^{re.escape(repo)}$ file:^{re.escape(path)}$'
-            },
+            "variables": {"q": f"repo:^{re.escape(repo)}$ file:^{re.escape(path)}$"},
         }
         res = requests.post(url, data=json.dumps(payload), headers=headers)
         body = res.json()
@@ -59,15 +57,36 @@ def write_contents(files):
         except IndexError:
             print(f"Warning: Could not retrieve {file_path}")
             continue
-        folder = os.path.dirname(file_path)
-        os.makedirs(folder, exist_ok=True)
-        print(f"Writing {file_path}")
-        with open(file_path, "w", newline="\n") as f:
-            f.write(content)
+        if content in existing["sch"]:
+            print(f"Contents of {path} already exists, skipping")
+        else:
+            folder = os.path.dirname(file_path)
+            os.makedirs(folder, exist_ok=True)
+            print(f"Writing {file_path}")
+            with open(file_path, "w", newline="\n") as f:
+                f.write(content)
+            existing["sch"].append(content)
+
+
+def read_existing_files():
+    existing_sch_files = []
+    existing_pcb_files = []
+    for root, _, files in os.walk("files"):
+        for file in files:
+            path = os.path.join(root, file)
+            with open(path) as f:
+                contents = f.read()
+            if file.endswith(".kicad_sch"):
+                existing_sch_files.append(contents)
+            elif file.endswith(".kicad_pcb"):
+                existing_pcb_files.append(contents)
+
+    return {"sch": existing_sch_files, "pcb": existing_pcb_files}
 
 
 files = get_file_list()
-
 print(f"Found {len(files)} .kicad_sch files")
 
-write_contents(files)
+existing = read_existing_files()
+
+write_contents(files, existing)

@@ -1,3 +1,9 @@
+"""
+Retrieves and writes all the KiCad 6 files we can find by using the Sourcegraph
+API.
+
+SPDX-License-Identifier: MIT
+"""
 import json
 import os
 import re
@@ -19,9 +25,14 @@ def get_file_list():
             data = json.loads(line[6:])
             if isinstance(data, list):
                 files += [
-                    itm for itm in data if "type" in itm and itm["type"] == "path"
+                    itm
+                    for itm in data
+                    if "type" in itm and itm["type"] == "path"
+                    # let's use the offical kicad repo on gitlab
+                    and itm["repository"] != "github.com/KiCad/kicad-source-mirror"
                 ]
     return files
+
 
 def request_content(repo, path):
     url = "https://sourcegraph.com/.api/graphql"
@@ -54,35 +65,50 @@ def request_content(repo, path):
 
     return content
 
+
 def write_contents(files, existing_sch_files):
     for f in files:
         repo = f["repository"]
         sch_path = f["path"]
 
         sch_content = request_content(repo, sch_path)
+        pcb_content = None
+        pro_content = None
 
         if sch_content is None:
-            print(f"Warning: Could not retrieve {repo}/{sch_path}")
-            continue
+            raise Exception(f"Could not retrieve {repo}/{sch_path}")
 
         if sch_content in existing_sch_files:
             print(f"Contents of {repo}/{sch_path} already exists, skipping.")
+            continue
         else:
-            full_path = os.path.join("files", repo, sch_path)
-            folder = os.path.dirname(full_path)
+            full_sch_path = os.path.join("files", repo, sch_path)
+            folder = os.path.dirname(full_sch_path)
             os.makedirs(folder, exist_ok=True)
             print(f"Writing {repo}/{sch_path}")
-            with open(full_path, "w", newline="\n") as f:
+            with open(full_sch_path, "w", newline="\n") as f:
                 f.write(sch_content)
             existing_sch_files.append(sch_content)
 
+            # get the .kicad_pcb with the same name, if available
             pcb_path = re.sub(r"\.kicad_sch$", ".kicad_pcb", sch_path)
             pcb_content = request_content(repo, pcb_path)
             if pcb_content is not None:
-                full_path = os.path.join("files", repo, pcb_path)
-                print(f"Writing {repo}/{pcb_path}")
-                with open(full_path, "w", newline="\n") as f:
-                    f.write(pcb_content)
+                # if there is a pcb there should be a .kicad_pro of that name too
+                pro_path = re.sub(r"\.kicad_sch$", ".kicad_pro", sch_path)
+                pro_content = request_content(repo, pro_path)
+
+                if pro_content is not None:
+
+                    full_pcb_path = os.path.join("files", repo, pcb_path)
+                    print(f"Writing {repo}/{pcb_path}")
+                    with open(full_pcb_path, "w", newline="\n") as f:
+                        f.write(pcb_content)
+
+                    full_pro_path = os.path.join("files", repo, pro_path)
+                    print(f"Writing {repo}/{pro_path}")
+                    with open(full_pro_path, "w", newline="\n") as f:
+                        f.write(pro_content)
 
 
 def read_existing_files():

@@ -81,44 +81,44 @@ def write_contents(files, existing_sch_files):
         if sch_content in existing_sch_files:
             print(f"Contents of {repo}/{sch_path} already exists, skipping.")
             continue
-        else:
-            full_sch_path = os.path.join("files", repo, sch_path)
-            folder = os.path.dirname(full_sch_path)
-            os.makedirs(folder, exist_ok=True)
-            print(f"Writing {repo}/{sch_path}")
-            with open(full_sch_path, "w", newline="\n") as f:
-                f.write(sch_content)
-            existing_sch_files.append(sch_content)
 
-            # get the .kicad_pcb with the same name, if available
-            pcb_path = re.sub(r"\.kicad_sch$", ".kicad_pcb", sch_path)
-            pcb_content = request_content(repo, pcb_path)
-            if pcb_content is not None:
-                # if there is a pcb there should be a .kicad_pro of that name too
-                pro_path = re.sub(r"\.kicad_sch$", ".kicad_pro", sch_path)
-                pro_content = request_content(repo, pro_path)
+        full_sch_path = os.path.join("files", repo, sch_path)
+        folder = os.path.dirname(full_sch_path)
+        os.makedirs(folder, exist_ok=True)
+        print(f"Writing {repo}/{sch_path}")
+        with open(full_sch_path, "w", newline="\n") as f:
+            f.write(sch_content)
+        existing_sch_files.append(sch_content)
 
-                if pro_content is not None:
+        # get the .kicad_pcb with the same name, if available
+        pcb_path = re.sub(r"\.kicad_sch$", ".kicad_pcb", sch_path)
+        pcb_content = request_content(repo, pcb_path)
+        if pcb_content is not None:
+            # if there is a pcb there should be a .kicad_pro of that name too
+            pro_path = re.sub(r"\.kicad_sch$", ".kicad_pro", sch_path)
+            pro_content = request_content(repo, pro_path)
 
-                    full_pcb_path = os.path.join("files", repo, pcb_path)
-                    print(f"Writing {repo}/{pcb_path}")
-                    with open(full_pcb_path, "w", newline="\n") as f:
-                        f.write(pcb_content)
+            if pro_content is not None:
 
-                    full_pro_path = os.path.join("files", repo, pro_path)
-                    print(f"Writing {repo}/{pro_path}")
-                    with open(full_pro_path, "w", newline="\n") as f:
-                        f.write(pro_content)
+                full_pcb_path = os.path.join("files", repo, pcb_path)
+                print(f"Writing {repo}/{pcb_path}")
+                with open(full_pcb_path, "w", newline="\n") as f:
+                    f.write(pcb_content)
+
+                full_pro_path = os.path.join("files", repo, pro_path)
+                print(f"Writing {repo}/{pro_path}")
+                with open(full_pro_path, "w", newline="\n") as f:
+                    f.write(pro_content)
 
 
 def read_existing_files():
     existing_sch_files = []
     for root, _, files in os.walk("files"):
         for file in files:
-            path = os.path.join(root, file)
-            with open(path) as f:
-                contents = f.read()
             if file.endswith(".kicad_sch"):
+                path = os.path.join(root, file)
+                with open(path) as f:
+                    contents = f.read()
                 existing_sch_files.append(contents)
 
     return existing_sch_files
